@@ -33,6 +33,10 @@ impl<I> IteratorBuffer<I> where I: Iterator, I::Item: Clone {
 
     pub fn len(&self) -> usize { self.buffer.len() }
 
+    pub fn buffer<'a>(&'a self) -> &'a [I::Item] {
+        &self.buffer
+    }
+
     pub fn pop(&mut self) -> Option<I::Item> {
         self.opening = false;
         self.fill();
