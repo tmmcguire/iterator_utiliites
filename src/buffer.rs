@@ -28,6 +28,9 @@ impl<I> IteratorBuffer<I> where I: Iterator, I::Item: Clone {
 
 impl<I> IteratorBuffer<I> where I: Iterator, I::Item: Clone {
 
+    pub fn is_opening(&self) -> bool { self.opening }
+    pub fn is_closing(&self) -> bool { self.closing }
+
     pub fn pop(&mut self) -> Option<I::Item> {
         self.opening = false;
         self.fill();
