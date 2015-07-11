@@ -1,0 +1,4 @@
+[package]
+name = "iterator-utilities"
+version = "0.1.0"
+authors = ["Tommy M. McGuire <mcguire@crsr.net>"]
