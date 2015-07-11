@@ -101,6 +101,14 @@ impl<I> IteratorBuffer<I> where I: Iterator, I::Item: Clone + PartialEq {
             false
         }
     }
+
+    pub fn ends_with(&self, suffix: &[I::Item]) -> bool {
+        if suffix.len() == self.buffer.len() {
+            self.buffer.ends_with(suffix)
+        } else {
+            false
+        }
+    }
 }
 
 impl<I> Index<usize> for IteratorBuffer<I> where I: Iterator, I::Item: Clone {
