@@ -50,7 +50,7 @@ impl<I> IteratorBuffer<I> where I: Iterator, I::Item: Clone {
 
     /// Yield the next element from the buffer, or None if the buffer
     /// is empty and the iterator has terminated.
-    pub fn yield(&mut self) -> Option<I::Item> {
+    pub fn pop(&mut self) -> Option<I::Item> {
         self.opening = false;
         self.fill();
         if self.buffer.is_empty() {
