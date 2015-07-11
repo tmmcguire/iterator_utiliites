@@ -17,8 +17,8 @@ impl<I> IteratorBuffer<I> where I: Iterator, I::Item: Clone {
             iterator: it,
             opening:  true,
             closing:  false,
-            size:     size,
-            buffer:   Vec::with_capacity(size),
+            size:     size + 1,
+            buffer:   Vec::with_capacity(size + 1),
         };
         ib.fill();
         ib
@@ -95,7 +95,7 @@ impl<I> IteratorBuffer<I> where I: Iterator, I::Item: Clone {
 impl<I> IteratorBuffer<I> where I: Iterator, I::Item: Clone + PartialEq {
 
     pub fn starts_with(&self, prefix: &[I::Item]) -> bool {
-        if prefix.len() <= self.buffer.len() {
+        if self.opening && prefix.len() <= self.buffer.len() {
             self.buffer.starts_with(prefix)
         } else {
             false
@@ -103,7 +103,7 @@ impl<I> IteratorBuffer<I> where I: Iterator, I::Item: Clone + PartialEq {
     }
 
     pub fn ends_with(&self, suffix: &[I::Item]) -> bool {
-        if suffix.len() == self.buffer.len() {
+        if self.closing && suffix.len() == self.buffer.len() {
             self.buffer.ends_with(suffix)
         } else {
             false
@@ -131,12 +131,13 @@ impl<I> IndexMut<usize> for IteratorBuffer<I> where I: Iterator, I::Item: Clone 
 fn test1() {
     let mut ib = IteratorBuffer::new((0..4),2);
     assert_eq!(ib[0], 0);
+    assert!(ib.starts_with(&[0,1]));
     assert_eq!(ib.pop(), Some(0));
     assert_eq!(ib[0], 1);
-    assert!(ib.starts_with(&[1,2]));
+    assert!(!ib.starts_with(&[1,2]));
     ib[1] = 5;
     assert_eq!(ib.pop(), Some(1));
-    assert!(ib.starts_with(&[5,3]));
+    assert!(ib.ends_with(&[5,3]));
     assert_eq!(ib.pop(), Some(5));
     assert_eq!(ib.pop(), Some(3));
     assert_eq!(ib.pop(), None);
