@@ -2,6 +2,8 @@
 
 use std::ops::{Index,IndexMut};
 
+/// A variable-size buffer reading from an iterator and providing
+/// access to future elements of the stream.
 pub struct IteratorBuffer<I:Iterator> {
     iterator: I,
     opening:  bool,
@@ -12,6 +14,7 @@ pub struct IteratorBuffer<I:Iterator> {
 
 impl<I> IteratorBuffer<I> where I: Iterator, I::Item: Clone {
 
+    /// Create a buffer for Iterator it, of size elements.
     pub fn new(it: I, size: usize) -> IteratorBuffer<I> {
         let mut ib = IteratorBuffer {
             iterator: it,
@@ -28,16 +31,26 @@ impl<I> IteratorBuffer<I> where I: Iterator, I::Item: Clone {
 
 impl<I> IteratorBuffer<I> where I: Iterator, I::Item: Clone {
 
+    /// Return true if the buffer has not yielded any elements from
+    /// the contained iterator.
     pub fn is_opening(&self) -> bool { self.opening }
+
+    /// Return false if the contained iterator has yielded None; the
+    /// only remaining elements are in the buffer.
     pub fn is_closing(&self) -> bool { self.closing }
 
+    /// The current length of the buffer. Pending elements from the
+    /// iterator, if any, are not counted.
     pub fn len(&self) -> usize { self.buffer.len() }
 
+    /// Provide read-only access to the buffer itself.
     pub fn buffer<'a>(&'a self) -> &'a [I::Item] {
         &self.buffer
     }
 
-    pub fn pop(&mut self) -> Option<I::Item> {
+    /// Yield the next element from the buffer, or None if the buffer
+    /// is empty and the iterator has terminated.
+    pub fn yield(&mut self) -> Option<I::Item> {
         self.opening = false;
         self.fill();
         if self.buffer.is_empty() {
@@ -49,6 +62,8 @@ impl<I> IteratorBuffer<I> where I: Iterator, I::Item: Clone {
         }
     }
 
+    /// Replace `len` elements from the buffer with copies of the
+    /// contents of `replacement`.
     pub fn replace(&mut self, len: usize, replacement: &[I::Item]) {
         for _ in 0..len {
             self.buffer.remove(0);
@@ -58,6 +73,7 @@ impl<I> IteratorBuffer<I> where I: Iterator, I::Item: Clone {
         }
     }
 
+    /// Fill the buffer from the iterator, setting closing if needed.
     fn fill(&mut self) {
         while !self.closing && self.buffer.len() < self.size {
             match self.iterator.next() {
@@ -66,40 +82,15 @@ impl<I> IteratorBuffer<I> where I: Iterator, I::Item: Clone {
             }
         }
     }
-
-    // fn start(&mut self) -> Option<char> {
-    //     self.started = true;
-    //     match self.iter.next() {
-    //         Some(&ch) => { self.prev = ch;   Some(ch) }
-    //         None      => { self.done = true; None }
-    //     }
-    // }
-
-    // fn cont(&mut self) -> Option<char> {
-    //     self.fill();
-    //     for &(trans,replacement) in TRANSLATIONS {
-    //         if self.matches(trans) {
-    //             self.replace(trans.len(), replacement);
-    //             break;
-    //         }
-    //     }
-    //     let next = self.buffer.remove(0);
-    //     match next {
-    //         'h' if is_vowel(&self.prev) || is_vowel(&self.buffer[0]) => Some(self.prev),
-    //         'h' =>                                                      self.cont(),
-    //         'w' if is_vowel(&self.prev) =>                              Some(self.prev),
-    //         'w' =>                                                      self.cont(),
-    //         ch if ch == self.prev =>                                    self.cont(),
-    //         ch => {
-    //             self.prev = next;
-    //             Some(next)
-    //         }
-    //     }
-    // }
 }
 
+/// Functions for testing the contents of the buffer.
 impl<I> IteratorBuffer<I> where I: Iterator, I::Item: Clone + PartialEq {
 
+    /// Return true if the iterator stream starts with the
+    /// prefix. This is true if the buffer has not yielded any
+    /// elements, and if the buffer starts with the prefix. For this
+    /// to be meaningful, the buffer must be larger than the prefix.
     pub fn starts_with(&self, prefix: &[I::Item]) -> bool {
         if self.opening && prefix.len() <= self.buffer.len() {
             self.buffer.starts_with(prefix)
@@ -108,6 +99,11 @@ impl<I> IteratorBuffer<I> where I: Iterator, I::Item: Clone + PartialEq {
         }
     }
 
+    /// Return true if the iterator stream ends with the suffix. This
+    /// is true if the buffer is closing (i.e. the iterator has
+    /// returned None) and if the buffer ends with the suffix. For
+    /// this to be meaningful, the buffer must be larger than the
+    /// suffix.
     pub fn ends_with(&self, suffix: &[I::Item]) -> bool {
         if self.closing && suffix.len() == self.buffer.len() {
             self.buffer.ends_with(suffix)
@@ -120,6 +116,7 @@ impl<I> IteratorBuffer<I> where I: Iterator, I::Item: Clone + PartialEq {
 impl<I> Index<usize> for IteratorBuffer<I> where I: Iterator, I::Item: Clone {
     type Output = I::Item;
 
+    /// Provide access to an element in the buffer.
     fn index<'a>(&'a self, index: usize) -> &'a I::Item {
         &self.buffer[index]
     }
@@ -127,6 +124,7 @@ impl<I> Index<usize> for IteratorBuffer<I> where I: Iterator, I::Item: Clone {
 
 impl<I> IndexMut<usize> for IteratorBuffer<I> where I: Iterator, I::Item: Clone {
 
+    /// Provide mutable access to an element in the buffer.
     fn index_mut<'a>(&'a mut self, index: usize) -> &'a mut I::Item {
         self.fill();
         &mut self.buffer[index]
