@@ -2,7 +2,4 @@
 
 pub mod buffer;
 pub mod empty;
-
-#[test]
-fn it_works() {
-}
+pub mod equivalence_class;
